@@ -136,12 +136,9 @@ st.set_page_config(
     initial_sidebar_state=st.session_state.sidebar_state
 )
 
-# Karmaşıklık Matrisi ve Özellik Önemi için sadeleştirilmiş Plotly araç çubuğu (Sadece PNG İndir aktif)
+# Statik grafikler için araç çubuğunu gizleyen Plotly yapılandırması
 PLOTLY_STATIK_CONFIG = {
-    "modeBarButtonsToRemove": [
-        "zoom2d", "pan2d", "select2d", "lasso2d",
-        "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"
-    ],
+    "displayModeBar": False,
     "displaylogo": False
 }
 
@@ -414,24 +411,29 @@ tahmin_butonu = st.sidebar.button("Analizi Başlat")
 
 if tahmin_butonu:
     st.session_state.analiz_aktif = True
-    st.session_state.sidebar_state = "collapsed"
-    st.rerun()
-
-if st.session_state.analiz_aktif:
-    # Mobilde açık kalan yan menüyü (sidebar) otomatik kapatan yardımcı tetikleyici
+    # Butona tıklandığında yan menüyü (Sidebar) otomatik kapatan JS enjeksiyonu
     components.html(
-        """
+        f"""
         <script>
-            const doc = window.parent.document;
-            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            if (sidebar && sidebar.getAttribute('aria-expanded') === 'true') {
-                const closeBtn = sidebar.querySelector('button');
-                if (closeBtn) closeBtn.click();
-            }
+            // Her tıklamada yeniden çalışması için zaman damgası: {datetime.now().timestamp()}
+            setTimeout(function() {{
+                const doc = window.parent.document;
+                const closeBtn =
+                    doc.querySelector('[data-testid="stSidebarCollapseButton"] button') ||
+                    doc.querySelector('[data-testid="stSidebarHeader"] button') ||
+                    doc.querySelector('[data-testid="stSidebar"] button[kind="header"]') ||
+                    doc.querySelector('[data-testid="stSidebar"] button[kind="headerNoPadding"]') ||
+                    doc.querySelector('button[kind="header"]');
+                if (closeBtn) {{
+                    closeBtn.click();
+                }}
+            }}, 100);
         </script>
         """,
         height=0,
     )
+
+if st.session_state.analiz_aktif:
     with st.spinner(f'{secilen_sembol} verileri analiz ediliyor...'):
         data = veri_hazirla(secilen_sembol, secilen_periyot)
         
@@ -600,7 +602,11 @@ if st.session_state.analiz_aktif:
                     xaxis=dict(
                         nticks=6,
                         tickformat="%d %b '%y",
-                        tickangle=0
+                        tickangle=0,
+                        fixedrange=False
+                    ),
+                    yaxis=dict(
+                        fixedrange=False
                     ),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
                     hovermode="x unified"
@@ -609,7 +615,7 @@ if st.session_state.analiz_aktif:
                 st.plotly_chart(
                     fig_backtest,
                     use_container_width=True,
-                    config={"displaylogo": False, "scrollZoom": True}
+                    config={"displayModeBar": False, "scrollZoom": True}
                 )
 
                 if len(backtest_df) > 0:

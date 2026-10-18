@@ -123,8 +123,27 @@ BIST_HISSELERI = {
     "ZOREN.IS": "Zorlu Enerji"
 }
 
-# Sayfa Ayarları
-st.set_page_config(page_title="BIST Yön Tahmin Paneli", layout="wide", page_icon="📈")
+# Sayfa ve Mobil Yan Menü (Sidebar) Durum Yönetimi
+if "sidebar_state" not in st.session_state:
+    st.session_state.sidebar_state = "auto"
+if "analiz_aktif" not in st.session_state:
+    st.session_state.analiz_aktif = False
+
+st.set_page_config(
+    page_title="BIST Yön Tahmin Paneli",
+    layout="wide",
+    page_icon="📈",
+    initial_sidebar_state=st.session_state.sidebar_state
+)
+
+# Karmaşıklık Matrisi ve Özellik Önemi için sadeleştirilmiş Plotly araç çubuğu (Sadece PNG İndir aktif)
+PLOTLY_STATIK_CONFIG = {
+    "modeBarButtonsToRemove": [
+        "zoom2d", "pan2d", "select2d", "lasso2d",
+        "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"
+    ],
+    "displaylogo": False
+}
 
 # --- FONKSİYONLAR ---
 
@@ -394,6 +413,25 @@ st.sidebar.caption("Not: Kısa vadeli al-sat (swing) stratejileri için 3 aylık
 tahmin_butonu = st.sidebar.button("Analizi Başlat")
 
 if tahmin_butonu:
+    st.session_state.analiz_aktif = True
+    st.session_state.sidebar_state = "collapsed"
+    st.rerun()
+
+if st.session_state.analiz_aktif:
+    # Mobilde açık kalan yan menüyü (sidebar) otomatik kapatan yardımcı tetikleyici
+    components.html(
+        """
+        <script>
+            const doc = window.parent.document;
+            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
+            if (sidebar && sidebar.getAttribute('aria-expanded') === 'true') {
+                const closeBtn = sidebar.querySelector('button');
+                if (closeBtn) closeBtn.click();
+            }
+        </script>
+        """,
+        height=0,
+    )
     with st.spinner(f'{secilen_sembol} verileri analiz ediliyor...'):
         data = veri_hazirla(secilen_sembol, secilen_periyot)
         
@@ -462,9 +500,15 @@ if tahmin_butonu:
                         margin=dict(l=10, r=10, t=20, b=10),
                         coloraxis_showscale=False,
                         xaxis_title="Relatif Önem Skoru",
-                        yaxis_title=""
+                        yaxis_title="",
+                        xaxis=dict(fixedrange=True),
+                        yaxis=dict(fixedrange=True)
                     )
-                    st.plotly_chart(fig_importance, use_container_width=True)
+                    st.plotly_chart(
+                        fig_importance,
+                        use_container_width=True,
+                        config=PLOTLY_STATIK_CONFIG
+                    )
 
                 with sub_col2:
                     st.subheader("📋 Son 5 Günlük Tahmin & Doğrulama")
@@ -549,14 +593,24 @@ if tahmin_butonu:
                 fig_backtest.update_layout(
                     template="plotly_dark",
                     height=380,
+                    dragmode="pan",
                     margin=dict(l=10, r=10, t=20, b=10),
                     xaxis_title="Tarih",
                     yaxis_title="Portföy Değeri (TL, başlangıç = 100)",
+                    xaxis=dict(
+                        nticks=6,
+                        tickformat="%d %b '%y",
+                        tickangle=0
+                    ),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
                     hovermode="x unified"
                 )
                 st.info("Nasıl Okunmalı: Gri kesikli çizgi, hisseyi alıp hiç satmasaydınız paranızın durumunu; yeşil çizgi ise sadece model Yükseliş dediğinde hissede kalsaydınız paranızın durumunu gösterir. Yeşil çizginin gri çizginin üzerinde olması, modelin pasif beklemeye göre daha fazla kazandırdığını (veya daha az kaybettirdiğini) ifade eder.")
-                st.plotly_chart(fig_backtest, use_container_width=True)
+                st.plotly_chart(
+                    fig_backtest,
+                    use_container_width=True,
+                    config={"displaylogo": False, "scrollZoom": True}
+                )
 
                 if len(backtest_df) > 0:
                     st.caption(
@@ -627,9 +681,14 @@ if tahmin_butonu:
                         margin=dict(l=10, r=10, t=20, b=10),
                         xaxis_title="Tahmin Edilen Değer",
                         yaxis_title="Gerçek Değer",
-                        yaxis=dict(autorange="reversed")  # Köşegen sol-üstten sağ-alta doğru görünsün
+                        xaxis=dict(fixedrange=True),
+                        yaxis=dict(autorange="reversed", fixedrange=True)  # Köşegen sol-üstten sağ-alta doğru görünsün
                     )
-                    st.plotly_chart(fig_cm, use_container_width=True)
+                    st.plotly_chart(
+                        fig_cm,
+                        use_container_width=True,
+                        config=PLOTLY_STATIK_CONFIG
+                    )
 
             # 4. SEKME: Haber Akışı (Google News RSS)
             with sekme_haber:

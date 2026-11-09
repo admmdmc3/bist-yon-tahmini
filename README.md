@@ -4,6 +4,8 @@ Bu proje, Borsa İstanbul (BIST) hisse senetlerinin günlük yön hareketlerini 
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bist-yon-tahmini-k2gnbbdgafuchn76fas3vj.streamlit.app)
 
+<img width="1917" height="902" alt="image" src="https://github.com/user-attachments/assets/b723ebcd-0371-437e-a493-04ae7b68e5bf" />
+
 ## 🎯 Proje Özeti
 *   **Amaç:** Hisse senedi fiyat hareketlerinin yönünü (Yükseliş/Düşüş) istatistiksel metrikler ve teknik göstergelerle tahmin etmek.
 *   **Makine Öğrenmesi Yaklaşımı:** Hiperparametre optimizasyonu `RandomizedSearchCV` ve zaman serilerine uygun `TimeSeriesSplit` kullanılarak gerçekleştirilmiştir.

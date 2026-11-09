@@ -573,11 +573,11 @@ def tradingview_grafik_ciz(df, sembol):
         col=1
     )
 
-    # Y ekseni fiyat sınırları (%5 alt/üst pay ile sabitlenmiş) ve X ekseni 15 günlük sağ analist boşluğu
+    # Y ekseni fiyat sınırları (%5 alt/üst pay ile sabitlenmiş) ve X ekseni 20 takvim günü (~15 iş günü) sağ analist boşluğu
     fiyat_alt_sinir = float(df[["Low", "BB_Low", "EMA20", "EMA50"]].min().min()) * 0.95
     fiyat_ust_sinir = float(df[["High", "BB_High", "EMA20", "EMA50"]].max().max()) * 1.05
     x_baslangic = df.index[0]
-    x_bitis_bosluklu = df.index[-1] + pd.Timedelta(days=15)
+    x_bitis_bosluklu = df.index[-1] + pd.Timedelta(days=20)
 
     fig.update_layout(
         template="plotly_dark",
@@ -600,8 +600,6 @@ def tradingview_grafik_ciz(df, sembol):
         tickformat="%d %b '%y",
         autorange=False,
         range=[x_baslangic, x_bitis_bosluklu],
-        minallowed=x_baslangic,
-        maxallowed=x_bitis_bosluklu,
         fixedrange=False,
         row=1,
         col=1
@@ -611,8 +609,6 @@ def tradingview_grafik_ciz(df, sembol):
         tickformat="%d %b '%y",
         autorange=False,
         range=[x_baslangic, x_bitis_bosluklu],
-        minallowed=x_baslangic,
-        maxallowed=x_bitis_bosluklu,
         fixedrange=False,
         title_text="Tarih",
         row=2,
@@ -622,9 +618,7 @@ def tradingview_grafik_ciz(df, sembol):
         title_text="Fiyat (TL)",
         autorange=False,
         range=[fiyat_alt_sinir, fiyat_ust_sinir],
-        minallowed=fiyat_alt_sinir,
-        maxallowed=fiyat_ust_sinir,
-        fixedrange=True,
+        fixedrange=False,
         row=1,
         col=1
     )
@@ -632,9 +626,7 @@ def tradingview_grafik_ciz(df, sembol):
         title_text="RSI",
         autorange=False,
         range=[0, 100],
-        minallowed=0,
-        maxallowed=100,
-        fixedrange=True,
+        fixedrange=False,
         row=2,
         col=1
     )
@@ -1130,11 +1122,11 @@ if st.session_state.analiz_aktif and "aktif_parametreler" in st.session_state:
                         delta=f"{karli_pozisyon_gun}/{toplam_pozisyon_gun} Kârlı Gün ({toplam_islem_gecisi} İşlem)"
                     )
 
-                # 6. Plotly çizgi grafiği (15 Günlük Sağ Analist Boşluğu ve Sınırlandırılmış X/Y Eksenleri ile)
+                # 6. Plotly çizgi grafiği (20 Takvim Günü / ~15 İş Günü Sağ Analist Boşluğu ve Sabit Range ile)
                 bt_alt_sinir = float(min(backtest_df['Pasif'].min(), backtest_df['Model'].min())) * 0.95
                 bt_ust_sinir = float(max(backtest_df['Pasif'].max(), backtest_df['Model'].max())) * 1.05
                 bt_x_baslangic = backtest_df.index[0]
-                bt_x_bitis_bosluklu = backtest_df.index[-1] + pd.Timedelta(days=15)
+                bt_x_bitis_bosluklu = backtest_df.index[-1] + pd.Timedelta(days=20)
 
                 fig_backtest = go.Figure()
                 fig_backtest.add_trace(go.Scatter(
@@ -1160,16 +1152,12 @@ if st.session_state.analiz_aktif and "aktif_parametreler" in st.session_state:
                         tickangle=0,
                         autorange=False,
                         range=[bt_x_baslangic, bt_x_bitis_bosluklu],
-                        minallowed=bt_x_baslangic,
-                        maxallowed=bt_x_bitis_bosluklu,
                         fixedrange=False
                     ),
                     yaxis=dict(
                         autorange=False,
                         range=[bt_alt_sinir, bt_ust_sinir],
-                        minallowed=bt_alt_sinir,
-                        maxallowed=bt_ust_sinir,
-                        fixedrange=True
+                        fixedrange=False
                     ),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
                     hovermode="x unified"
